@@ -63,49 +63,17 @@ def list_personal_clusters(api, created_after):
     return final_list
 
 
-
-
-def filter_cluster_list(cluster, api):
-    cs = ClusterService(api)
-    date_from = datetime.datetime(2023, 4, 11, 0, 0, 0)
-    date_from_unix = calendar.timegm(date_from.timetuple()) * 1000
-    cluster_id = cluster['cluster_id']
-    print(cluster_id)
-    cluster_name = cluster['cluster_name']
-    creator = cluster['creator_user_name']
-    print('trying events')
-    events = cs.get_events(cluster_id, limit=500)['events']
-    print('trying')
-    try:
-        creation_time = [event['timestamp'] for event in events if event['type'] == 'CREATING'][-1]
-    except:
-        creation_time = [event['timestamp'] for event in events][-1]
-    if creation_time > date_from_unix:
-        return [cluster_id, cluster_name, creator, creation_time]
-
-
-
-def list_personal_clusters_p(api, created_after):
-    cs = ClusterService(api)
-    list_clusters = cs.list_clusters()['clusters']
-    personal_compute_clusters = [cluster for cluster in list_clusters if 'single_user_name' in cluster.keys()]
-    final_list = []
-    with mp.Pool(4) as p:
-        result = p.map(filter_cluster_list, personal_compute_clusters)
-    return result
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Finds all Personal Compute Clusters')
-    parser.add_argument('--workspaces', help='List of workspaces to run this for')
+    #parser.add_argument('--workspaces', help='List of workspaces to run this for')
     parser.add_argument('--email', help='Admin Email address for Workspace paths')
     parser.add_argument('--profile', help='Databricks profile to use to connect to Workspace')
     args = parser.parse_args()
-    workspaces, email, profiles = args.workspaces, args.email, str(args.profile).split(",")
+    email, profiles = args.email, str(args.profile).split(",")
     date_from = datetime.datetime(2023, 4, 11, 0, 0, 0)
     date_from_unix = calendar.timegm(date_from.timetuple()) * 1000
     #profiles = ['DEFAULT']
-    profiles = get_profiles()
+    #profiles = get_profiles()
     for profile in profiles:
         print("=" * 100)
         print(f"Starting execution for profile {profile}")
