@@ -80,6 +80,7 @@ if __name__ == '__main__':
         print("=" * 100)
         api = get_api(profile)
         personal_clusters = list_personal_clusters(api, date_from_unix)
-
+        print("Personal Clusters created after 11 Apr 2023:")
+        print(personal_clusters)
         #delete_cluster(api, personal_clusters)
 
