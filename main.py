@@ -38,7 +38,7 @@ def delete_cluster(api, list_of_clusters):
     cs = ClusterService(api)
     for cluster in list_of_clusters:
         try:
-            cs.delete_cluster(cluster_id=cluster)
+            cs.delete_cluster(cluster_id=cluster[0])
         except:
             print("Failed to delete cluster {}".format(cluster))
 
