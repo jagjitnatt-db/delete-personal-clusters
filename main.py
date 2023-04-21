@@ -59,7 +59,8 @@ def list_personal_clusters(api, created_after):
         except:
             creation_time = [event['timestamp'] for event in events][-1]
         if creation_time > created_after:
-            final_list.append([cluster_id, cluster_name, creator, creation_time])
+            readable_ts = datetime.datetime.utcfromtimestamp(creation_time/1000).strftime('%Y-%m-%d %H:%M:%S')
+            final_list.append([cluster_id, cluster_name, creator, readable_ts])
     return final_list
 
 
