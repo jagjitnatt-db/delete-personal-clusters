@@ -1,6 +1,6 @@
 import os
 import argparse
-import datetime, calendar
+import datetime, calendar, time
 import multiprocessing as mp
 from databricks_cli.oauth.oauth import check_and_refresh_access_token
 from databricks_cli.configure.provider import update_and_persist_config, ProfileConfigProvider
@@ -43,26 +43,27 @@ def delete_cluster(api, list_of_clusters):
             print("Failed to delete cluster {}".format(cluster))
 
 
+def get_cluster_creation_date(cluster_with_cs):
+    cs = cluster_with_cs[0]
+    cluster = cluster_with_cs[1]
+    cluster_id = cluster['cluster_id']
+    print("Processing Cluster ID - {}".format(cluster_id))
+    cluster_name = cluster['cluster_name']
+    creator = cluster['creator_user_name']
+    events = cs.get_events(cluster_id, limit=1, event_types=['CREATING'], order='ASC')['events']
+    creation_time = [event['timestamp'] for event in events][0]
+    readable_ts = datetime.datetime.utcfromtimestamp(creation_time / 1000).strftime('%Y-%m-%d %H:%M:%S')
+    return [cluster_id, cluster_name, creator, creation_time, readable_ts]
+
+
 def list_personal_clusters(api, created_after):
     cs = ClusterService(api)
     list_clusters = cs.list_clusters()['clusters']
-    personal_compute_clusters = [cluster for cluster in list_clusters if 'single_user_name' in cluster.keys()]
-    final_list = []
-    for cluster in personal_compute_clusters:
-        cluster_id = cluster['cluster_id']
-        print("Processing Cluster ID - {}".format(cluster_id))
-        cluster_name = cluster['cluster_name']
-        creator = cluster['creator_user_name']
-        # events = cs.get_events(cluster_id, limit=500)['events']
-        # try:
-        #     creation_time = [event['timestamp'] for event in events if event['type'] == 'CREATING'][-1]
-        # except:
-        #     creation_time = [event['timestamp'] for event in events][-1]
-        events = cs.get_events(cluster_id, limit=1, event_types=['CREATING'], order='ASC')['events']
-        creation_time = [event['timestamp'] for event in events][0]
-        if creation_time > created_after:
-            readable_ts = datetime.datetime.utcfromtimestamp(creation_time/1000).strftime('%Y-%m-%d %H:%M:%S')
-            final_list.append([cluster_id, cluster_name, creator, readable_ts])
+    personal_compute_clusters = [[cs, cluster] for cluster in list_clusters if 'single_user_name' in cluster.keys()]
+    cores_total = mp.cpu_count()
+    with mp.Pool(cores_total) as mpp:
+        all_cluster_list = mpp.map(get_cluster_creation_date, personal_compute_clusters)
+    final_list = [cluster for cluster in all_cluster_list if cluster[3] > created_after]
     return final_list
 
 
@@ -88,5 +89,6 @@ if __name__ == '__main__':
         with open("personal_clusters.txt", "w+") as f:
             f.write("cluster_id, cluster_name, creator, created_ts")
             f.writelines(map((lambda x: ", ".join(x) + "\n"), personal_clusters))
+
         #delete_cluster(api, personal_clusters)
 
