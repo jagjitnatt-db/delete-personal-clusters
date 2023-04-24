@@ -6,7 +6,7 @@ from databricks_cli.oauth.oauth import check_and_refresh_access_token
 from databricks_cli.configure.provider import update_and_persist_config, ProfileConfigProvider
 from databricks_cli.configure.config import _get_api_client as get_api_client
 from databricks_cli.clusters.api import ClusterService
-
+from databricks_cli.cluster_policies.api import ClusterPolicyApi
 
 def get_email(profile):
     config = ProfileConfigProvider(profile).get_config()
@@ -34,6 +34,14 @@ def get_api(profile):
     return api_client
 
 
+def get_personal_cluster_policies(api):
+    cp = ClusterPolicyApi(api)
+    policies = cp.list_cluster_policies()
+    personal_cluster_policies = [p['policy_id'] for p in policies['policies'] if 'policy_family_id' in p.keys() if
+           p['policy_family_id'] == 'personal-vm']
+    return personal_cluster_policies
+
+
 def delete_cluster(api, list_of_clusters):
     cs = ClusterService(api)
     for cluster in list_of_clusters:
@@ -46,7 +54,9 @@ def delete_cluster(api, list_of_clusters):
 def list_personal_clusters(api, created_after):
     cs = ClusterService(api)
     list_clusters = cs.list_clusters()['clusters']
-    personal_compute_clusters = [cluster for cluster in list_clusters if 'single_user_name' in cluster.keys()]
+    list_policies = get_personal_cluster_policies(api)
+    #personal_compute_clusters = [cluster for cluster in list_clusters if 'single_user_name' in cluster.keys()]
+    personal_compute_clusters = [cluster for cluster in list_clusters if 'policy_id' in cluster.keys() if cluster['policy_id'] in list_policies]
     final_list = []
     for cluster in personal_compute_clusters:
         cluster_id = cluster['cluster_id']
