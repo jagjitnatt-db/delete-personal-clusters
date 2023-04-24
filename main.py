@@ -82,11 +82,13 @@ if __name__ == '__main__':
         print(f"Starting execution for profile {profile}")
         print("=" * 100)
         api = get_api(profile)
+        print(f"Start time - {datetime.datetime.now()}")
         personal_clusters = list_personal_clusters(api, date_from_unix)
+        print(f"End time - {datetime.datetime.now()}")
         print("Personal Clusters created after 11 Apr 2023:")
         print(personal_clusters)
         with open("personal_clusters.txt", "w+") as f:
-            f.write("cluster_id, cluster_name, creator, created_ts")
+            f.write("cluster_id, cluster_name, creator, created_ts\n")
             f.writelines(map((lambda x: ", ".join(x) + "\n"), personal_clusters))
         #delete_cluster(api, personal_clusters)
 

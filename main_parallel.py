@@ -63,7 +63,7 @@ def list_personal_clusters(api, created_after):
     cores_total = mp.cpu_count()
     with mp.Pool(cores_total) as mpp:
         all_cluster_list = mpp.map(get_cluster_creation_date, personal_compute_clusters)
-    final_list = [cluster for cluster in all_cluster_list if cluster[3] > created_after]
+    final_list = [cluster[0:3] + cluster[4:5] for cluster in all_cluster_list if len(cluster) == 5 if cluster[3] > created_after]
     return final_list
 
 
@@ -83,11 +83,13 @@ if __name__ == '__main__':
         print(f"Starting execution for profile {profile}")
         print("=" * 100)
         api = get_api(profile)
+        print(f"Start time - {datetime.datetime.now()}")
         personal_clusters = list_personal_clusters(api, date_from_unix)
+        print(f"End time - {datetime.datetime.now()}")
         print("Personal Clusters created after 11 Apr 2023:")
         print(personal_clusters)
         with open("personal_clusters.txt", "w+") as f:
-            f.write("cluster_id, cluster_name, creator, created_ts")
+            f.write("cluster_id, cluster_name, creator, created_ts\n")
             f.writelines(map((lambda x: ", ".join(x) + "\n"), personal_clusters))
 
         #delete_cluster(api, personal_clusters)
