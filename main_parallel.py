@@ -99,7 +99,7 @@ if __name__ == '__main__':
         print(f"End time - {datetime.datetime.now()}")
         print("Personal Clusters created after 11 Apr 2023:")
         print(personal_clusters)
-        with open("personal_clusters.txt", "w+") as f:
+        with open(f"{profile}_personal_clusters.txt", "w+") as f:
             f.write("cluster_id, cluster_name, creator, created_ts\n")
             f.writelines(map((lambda x: ", ".join(x) + "\n"), personal_clusters))
 
